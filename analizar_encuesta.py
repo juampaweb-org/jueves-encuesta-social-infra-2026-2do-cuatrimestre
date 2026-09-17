@@ -14,6 +14,7 @@ directamente en el navegador, sin necesidad de servidor).
 
 import csv
 import html
+import random
 import textwrap
 from collections import Counter
 from pathlib import Path
@@ -183,22 +184,43 @@ def generar_grafico_barras(contador, titulo, nombre_archivo):
     """Genera un gráfico de barras horizontales a partir de un Counter y lo guarda como PNG.
     Devuelve la ruta del archivo generado (relativa a output/), para usar en el HTML."""
     items = contador.most_common()
-    # Algunas respuestas son textos largos en vez de una opción corta
-    # (ej: alguien que escribió su propia respuesta con sus palabras).
-    # Se acortan con "…" para que no rompan el gráfico.
-    etiquetas = [textwrap.shorten(etiqueta, width=55, placeholder="…") for etiqueta, _ in items]
+    etiquetas_completas = [etiqueta for etiqueta, _ in items]
     cantidades = [cantidad for _, cantidad in items]
 
-    alto = max(3, len(etiquetas) * 0.6)
-    plt.figure(figsize=(9, alto))
-    plt.barh(etiquetas, cantidades, color="#4C72B0")
-    plt.gca().invert_yaxis()  # la opción más elegida queda arriba
-    plt.title(titulo)
-    plt.xlabel("Cantidad de alumnos")
+    # Algunas respuestas son textos largos en vez de una opción corta
+    # (ej: alguien que escribió su propia respuesta con sus palabras).
+    # Se acortan con "…" para que no rompan el gráfico; el texto completo
+    # queda igual disponible en la referencia (leyenda) de la derecha.
+    etiquetas_cortas = [textwrap.shorten(e, width=55, placeholder="…") for e in etiquetas_completas]
+
+    # Una color distinto por barra, para que se distingan mejor a simple vista.
+    colores = plt.get_cmap("tab20").colors[: len(items)]
+
+    alto = max(3, len(etiquetas_cortas) * 0.6)
+    figura, ejes = plt.subplots(figsize=(9, alto))
+    barras = ejes.barh(etiquetas_cortas, cantidades, color=colores)
+    ejes.invert_yaxis()  # la opción más elegida queda arriba
+    ejes.set_title(titulo)
+    ejes.set_xlabel("Cantidad de alumnos")
+
+    # Se envuelve en varias líneas para que una respuesta larga no estire
+    # el ancho de la referencia (y de la imagen entera) sin límite.
+    referencias = [
+        textwrap.fill(f"{etiqueta} ({cantidad})", width=45)
+        for etiqueta, cantidad in zip(etiquetas_completas, cantidades)
+    ]
+    ejes.legend(
+        barras,
+        referencias,
+        title="Referencia",
+        loc="center left",
+        bbox_to_anchor=(1, 0.5),
+        fontsize="small",
+    )
 
     ruta_completa = CARPETA_GRAFICOS / nombre_archivo
-    plt.savefig(ruta_completa, bbox_inches="tight")
-    plt.close()
+    figura.savefig(ruta_completa, bbox_inches="tight")
+    plt.close(figura)
 
     return ruta_completa.relative_to(CARPETA_SALIDA)
 
@@ -257,6 +279,9 @@ def generar_html(respuestas, graficos):
     for columna, titulo in PREGUNTAS_TEXTO_LIBRE:
         respuestas_columna = [fila[columna].strip() for fila in respuestas]
         respuestas_columna = [r for r in respuestas_columna if r]
+        # Se mezclan para no mostrarlas siempre en el orden en que llegaron
+        # las respuestas (ese orden no aporta nada y así queda más parejo).
+        random.shuffle(respuestas_columna)
 
         partes.append(f"<h3>{html.escape(titulo)}</h3>")
         if respuestas_columna:
