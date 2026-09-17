@@ -5,9 +5,15 @@ jueves-encuesta-social-infra-2026-2do-cuatrimestre
 
 ```bash
 python3 -m venv .venv
-.venv/bin/pip install -r requirements.txt
-.venv/bin/python analizar_encuesta.py
+source .venv/bin/activate
+pip install -r requirements.txt
+python analizar_encuesta.py
 ```
+
+`source .venv/bin/activate` activa el entorno virtual (en Windows es
+`.venv\Scripts\activate`): mientras esté activo, `pip` y `python` usan la
+copia del entorno virtual en vez de la instalación global. Para salir del
+entorno virtual alcanza con ejecutar `deactivate`.
 
 Esto genera la carpeta `output/` con los gráficos (`output/graficos/*.png`) y
 `output/index.html`, que se puede abrir directamente en el navegador (no
