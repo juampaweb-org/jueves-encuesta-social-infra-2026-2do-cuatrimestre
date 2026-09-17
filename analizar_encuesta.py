@@ -137,6 +137,68 @@ PREGUNTAS_TEXTO_LIBRE = [
 ]
 
 
+# Resumen de las respuestas de cada pregunta de texto libre (todos escribieron
+# cosas distintas, así que no se pueden graficar). Se procesó con IA a partir
+# de las respuestas del CSV y se dejó escrito acá a mano: si se actualizan las
+# respuestas en el CSV, hay que volver a pedir el resumen y actualizar estas
+# variables manualmente, no se regenera solo.
+RESUMENES_IA = {
+    "Contenido que les gustaría ver en clase": (
+        "El pedido más repetido es automatización con Python aplicada al trabajo "
+        "de Infra: scripting, desplegar software en Windows, armar herramientas de "
+        "soporte técnico y entornos con scripts precargados. El segundo tema más "
+        "mencionado es consumir APIs, varios puntualmente de modelos de IA o agentes. "
+        "Quienes arrancan de cero piden \"todo el contenido posible\" o practicar cómo "
+        "encarar la resolución de un problema (pseudocódigo, decidir qué estructura de "
+        "control usar); también aparece interés por el gaming y buenos comentarios "
+        "sobre los ejercicios grupales."
+    ),
+    "Sugerencias para mejorar el ambiente en clase": (
+        "Casi todos dicen que el ambiente ya está bien y no cambiarían nada: varios "
+        "destacan que la clase es amena y didáctica, que la forma de explicar engancha "
+        "y que dan ganas de estar ahí. Como sugerencias concretas aparecen solo dos: "
+        "seguir con actividades como los juegos y las tareas grupales, que ayudan al "
+        "clima del curso, y \"menos horas\" de cursada."
+    ),
+    "Ideas para incentivar el uso de cámaras": (
+        "La mayoría explica por qué no la prende más que cómo incentivarla: cursan "
+        "después del trabajo, sin tiempo ni ganas de \"arreglarse\", con la casa o los "
+        "hijos de fondo, y varios coinciden en que es un tema difícil de resolver y "
+        "que debería quedar a criterio de cada uno. Entre las ideas que sí proponen, "
+        "la más repetida es atarla a la nota (bonus, consideración para el parcial o "
+        "descontar puntos, dicho medio en chiste), y también aparece prenderla solo un "
+        "rato de 15-20 minutos para conocerse o durante un ejercicio."
+    ),
+    "Recomendaciones de IT (libros, videos, documentos)": (
+        "Varios no tienen ninguna recomendación para compartir. Entre quienes sí, se "
+        "reparten entre libros y plataformas: \"Introducción a redes\" (Severance), "
+        "\"Fundamentos de Sistemas Digitales\" (Thomas L. Floyd), los libros de la "
+        "editorial WILEY, los oficiales de CISCO y de Linux Professional Institute, y "
+        "dos libros universitarios de algoritmos con diagramas de flujo y pseudocódigo "
+        "(Univ. de Aguascalientes y Univ. de Tamaulipas). En video/práctica aparecen el "
+        "canal \"El Pelado Nerd\", Udemy y HackTheBox."
+    ),
+    "Recomendaciones de libros o películas": (
+        "Casi todas son películas, con ciencia ficción y clásicos a la cabeza: "
+        "Interestelar y Matrix son las más repetidas, seguidas por Volver al Futuro, "
+        "Ex Machina, Una mente brillante, El Señor de los Anillos y la saga de Jurassic "
+        "Park. También aparecen Happy Death Day, las películas de Denzel Washington, la "
+        "serie Game of Thrones y el género thriller. En libros: \"El extranjero\" de "
+        "Camus y \"Crimen y castigo\" de Dostoievski."
+    ),
+    "Pregunta abierta": (
+        "La mayoría son mensajes de agradecimiento al profesor por la onda y la forma "
+        "de dar la clase, y comentarios de que este primer contacto con la programación "
+        "los está enganchando; también se valora el uso de GitHub como complemento. "
+        "Aparecen dudas concretas para responder en clase: cómo conseguir trabajo en IT "
+        "y si la IA va a reemplazar al programador. Como propuestas: una presentación de "
+        "Unity, una materia posterior de laboratorio de scripts en Python para "
+        "infraestructura (DevOps), y un pedido puntual de hacer la exposición final de "
+        "forma individual por problemas de horarios para coordinar en grupo."
+    ),
+}
+
+
 # ---------------------------------------------------------------------------
 # Lectura de datos
 # ---------------------------------------------------------------------------
@@ -274,6 +336,8 @@ def generar_html(respuestas, graficos):
         "img { max-width: 100%; display: block; margin: 1rem auto; }",
         "ul { line-height: 1.5; }",
         "li { margin-bottom: 0.6rem; }",
+        ".resumen-ia { background: #eef3fa; border-left: 4px solid #4C72B0;"
+        " padding: 0.6rem 1rem; font-style: italic; }",
         "</style>",
         "</head>",
         "<body>",
@@ -299,6 +363,12 @@ def generar_html(respuestas, graficos):
         random.shuffle(respuestas_columna)
 
         partes.append(f"<h3>{html.escape(titulo)}</h3>")
+        resumen = RESUMENES_IA.get(titulo)
+        if resumen:
+            partes.append(
+                '<p class="resumen-ia"><strong>Resumen (procesado con IA):</strong> '
+                f"{html.escape(resumen)}</p>"
+            )
         if respuestas_columna:
             partes.append("<ul>")
             for respuesta in respuestas_columna:
