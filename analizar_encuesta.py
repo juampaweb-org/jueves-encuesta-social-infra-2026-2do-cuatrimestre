@@ -154,11 +154,14 @@ def leer_respuestas():
 
 def contar_opcion_unica(respuestas, columna):
     """Cuenta cuántas veces aparece cada valor en una columna de opción única."""
-    valores = (fila[columna].strip() for fila in respuestas)
-    valores = (v for v in valores if v)
-
-    if columna == "Provincia":
-        valores = (NORMALIZACION_PROVINCIA.get(v.lower(), v) for v in valores)
+    valores = []
+    for fila in respuestas:
+        valor = fila[columna].strip()
+        if not valor:
+            continue
+        if columna == "Provincia":
+            valor = NORMALIZACION_PROVINCIA.get(valor.lower(), valor)
+        valores.append(valor)
 
     return Counter(valores)
 
@@ -171,8 +174,11 @@ def contar_opcion_multiple(respuestas, columna):
         valor = fila[columna].strip()
         if not valor:
             continue
-        opciones = [o.strip() for o in valor.split(",")]
-        contador.update(o for o in opciones if o)
+        opciones = valor.split(",")
+        for opcion in opciones:
+            opcion = opcion.strip()
+            if opcion:
+                contador[opcion] += 1
     return contador
 
 
@@ -184,14 +190,20 @@ def generar_grafico_barras(contador, titulo, nombre_archivo):
     """Genera un gráfico de barras horizontales a partir de un Counter y lo guarda como PNG.
     Devuelve la ruta del archivo generado (relativa a output/), para usar en el HTML."""
     items = contador.most_common()
-    etiquetas_completas = [etiqueta for etiqueta, _ in items]
-    cantidades = [cantidad for _, cantidad in items]
+    etiquetas_completas = []
+    cantidades = []
+    for etiqueta, cantidad in items:
+        etiquetas_completas.append(etiqueta)
+        cantidades.append(cantidad)
 
     # Algunas respuestas son textos largos en vez de una opción corta
     # (ej: alguien que escribió su propia respuesta con sus palabras).
     # Se acortan con "…" para que no rompan el gráfico; el texto completo
     # queda igual disponible en la referencia (leyenda) de la derecha.
-    etiquetas_cortas = [textwrap.shorten(e, width=55, placeholder="…") for e in etiquetas_completas]
+    etiquetas_cortas = []
+    for etiqueta in etiquetas_completas:
+        etiqueta_corta = textwrap.shorten(etiqueta, width=55, placeholder="…")
+        etiquetas_cortas.append(etiqueta_corta)
 
     # Una color distinto por barra, para que se distingan mejor a simple vista.
     colores = plt.get_cmap("tab20").colors[: len(items)]
@@ -205,10 +217,10 @@ def generar_grafico_barras(contador, titulo, nombre_archivo):
 
     # Se envuelve en varias líneas para que una respuesta larga no estire
     # el ancho de la referencia (y de la imagen entera) sin límite.
-    referencias = [
-        textwrap.fill(f"{etiqueta} ({cantidad})", width=45)
-        for etiqueta, cantidad in zip(etiquetas_completas, cantidades)
-    ]
+    referencias = []
+    for etiqueta, cantidad in zip(etiquetas_completas, cantidades):
+        texto_referencia = f"{etiqueta} ({cantidad})"
+        referencias.append(textwrap.fill(texto_referencia, width=45))
     ejes.legend(
         barras,
         referencias,
@@ -277,8 +289,11 @@ def generar_html(respuestas, graficos):
 
     partes.append("<h2>Respuestas de texto libre</h2>")
     for columna, titulo in PREGUNTAS_TEXTO_LIBRE:
-        respuestas_columna = [fila[columna].strip() for fila in respuestas]
-        respuestas_columna = [r for r in respuestas_columna if r]
+        respuestas_columna = []
+        for fila in respuestas:
+            respuesta = fila[columna].strip()
+            if respuesta:
+                respuestas_columna.append(respuesta)
         # Se mezclan para no mostrarlas siempre en el orden en que llegaron
         # las respuestas (ese orden no aporta nada y así queda más parejo).
         random.shuffle(respuestas_columna)
